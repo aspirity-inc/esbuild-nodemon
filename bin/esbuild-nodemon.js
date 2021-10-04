@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const { tmpdir } = require("os");
 const { join: pathJoin } = require("path");
 const { rmdirSync } = require("fs");
