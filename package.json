@@ -1,0 +1,29 @@
+{
+  "name": "esbuild-nodemon",
+  "version": "0.1.0",
+  "description": "",
+  "main": "lib/configs.js",
+  "type": "commonjs",
+  "bin": {
+    "esbuild-nodemon": "bin/esbuild-nodemon.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aspirity-ru/esbuild-nodemon.git"
+  },
+  "keywords": [
+    "esbuild",
+    "nodemon",
+    "watch"
+  ],
+  "author": "Denis Zavershinskiy <dz@aspirity.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/aspirity-ru/esbuild-nodemon/issues"
+  },
+  "homepage": "https://github.com/aspirity-ru/esbuild-nodemon#readme",
+  "dependencies": {
+    "esbuild": "^0.13.3",
+    "nodemon": "^2.0.13"
+  }
+}
