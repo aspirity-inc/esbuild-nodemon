@@ -1,14 +1,15 @@
 #!/usr/bin/env node
-const { tmpdir } = require("os");
-const { join: pathJoin } = require("path");
+const { resolve: resolvePath } = require("path");
 const { rmdirSync } = require("fs");
 const esbuild = require("esbuild");
 const nodemon = require("nodemon");
 const { parse: nodemonParse } = require("nodemon/lib/cli");
+const { loadPackageJsonSync } = require("../lib/load-package-json");
+const { getRootBuildDirectory } = require("../lib/get-root-build-directory");
 
 const outFilename = "output.js";
-const buildDir = pathJoin(tmpdir(), "esbuild-nodemon", `_${getPathDate()}`);
-const outputFilePath = pathJoin(buildDir, outFilename);
+const buildDir = resolvePath(getRootBuildDirectory(), `_${getPathDate()}`);
+const outputFilePath = resolvePath(buildDir, outFilename);
 
 console.log({ outputFilePath });
 
@@ -29,6 +30,7 @@ esbuild
     watch: { onRebuild },
     outfile: outputFilePath,
     entryPoints: [nodemonOptions.script],
+    external: getDependencies(),
   })
   .then(() => {
     nodemon({
@@ -60,4 +62,13 @@ function getNodeArgs() {
 
 function getPathDate() {
   return new Date().toISOString().replace(/\:/g, "-");
+}
+
+function getDependencies() {
+  const { dependencies, devDependencies } = loadPackageJsonSync();
+  const names = [
+    ...Object.keys(dependencies ?? {}),
+    ...Object.keys(devDependencies ?? {}),
+  ];
+  return names;
 }
