@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 const { resolve: resolvePath } = require("path");
-const { rmdirSync } = require("fs");
 const esbuild = require("esbuild");
 const nodemon = require("nodemon");
 const { parse: nodemonParse } = require("nodemon/lib/cli");
 const { loadPackageJsonSync } = require("../lib/load-package-json");
 const { getRootBuildDirectory } = require("../lib/get-root-build-directory");
+const { rmdirSync } = require("../lib/rm");
 
 const outFilename = "output.js";
 const buildDir = resolvePath(getRootBuildDirectory(), `_${getPathDate()}`);
@@ -19,7 +19,6 @@ const nodemonOptions = nodemonParse(process.argv);
 process.on("SIGINT", () => {
   console.log(`Removing ${buildDir}`);
   rmdirSync(buildDir, { recursive: true });
-  process.exit(0);
 });
 
 esbuild
