@@ -1,6 +1,6 @@
 {
   "name": "esbuild-nodemon",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "",
   "main": "lib/configs.js",
   "type": "commonjs",

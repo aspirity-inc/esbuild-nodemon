@@ -10,8 +10,10 @@ const outFilename = "output.js";
 const buildDir = resolvePath(getRootBuildDirectory(), `_${getPathDate()}`);
 const outputFilePath = resolvePath(buildDir, outFilename);
 
-function shutdown(signal) {
+function shutdown(signal, esbuild, nodemon) {
   console.log("[esbuild-nodemon]", "Graceful shutdown", { signal });
+  esbuild.stop();
+  nodemon.emit("quit");
   const relPath = relative(process.cwd(), buildDir);
   console.log("[esbuild-nodemon]", "Removing build directory", {
     path: relPath,
@@ -19,15 +21,15 @@ function shutdown(signal) {
   rmdirSync(buildDir, { recursive: true });
 }
 
-process.on("SIGINT", shutdown);
-process.on("SIGTERM", shutdown);
-
 async function run() {
   console.log("[esbuild-nodemon]", { pid: process.pid });
   /** @type { nodemon.Settings } */
   const nodemonOptions = nodemonParse(process.argv);
-  await startBuild(nodemonOptions.script, outputFilePath);
-  startNodemon(nodemonOptions, outputFilePath);
+  const esbuild = await startBuild(nodemonOptions.script, outputFilePath);
+  const nodemon = startNodemon(nodemonOptions, outputFilePath);
+
+  process.on("SIGINT", (signal) => shutdown(signal, esbuild, nodemon));
+  process.on("SIGTERM", (signal) => shutdown(signal, esbuild, nodemon));
 }
 
 run();
