@@ -1,73 +1,52 @@
 #!/usr/bin/env node
-const { resolve: resolvePath } = require("path");
-const esbuild = require("esbuild");
-const nodemon = require("nodemon");
+const { resolve: resolvePath, relative } = require("path");
 const { parse: nodemonParse } = require("nodemon/lib/cli");
-const { loadPackageJsonSync } = require("../lib/load-package-json");
 const { getRootBuildDirectory } = require("../lib/get-root-build-directory");
 const { rmdirSync } = require("../lib/rm");
+const { startBuild } = require("../lib/esbuild");
+const { startNodemon } = require("../lib/nodemon");
 
-const outFilename = "output.js";
-const buildDir = resolvePath(getRootBuildDirectory(), `_${getPathDate()}`);
-const outputFilePath = resolvePath(buildDir, outFilename);
+async function run() {
+  const outFilename = "output.js";
+  const buildDir = resolvePath(getRootBuildDirectory(), `_${getPathDate()}`);
+  const outputFilePath = resolvePath(buildDir, outFilename);
+  console.log("[esbuild-nodemon]", { pid: process.pid });
 
-console.log({ outputFilePath });
+  /** @type { nodemon.Settings } */
+  const nodemonOptions = nodemonParse(process.argv);
+  await startBuild(nodemonOptions.script, outputFilePath);
+  const mon = startNodemon(nodemonOptions, outputFilePath);
 
-/** @type { nodemon.Settings } */
-const nodemonOptions = nodemonParse(process.argv);
-
-process.on("SIGINT", () => {
-  console.log(`Removing ${buildDir}`);
-  rmdirSync(buildDir, { recursive: true });
-});
-
-esbuild
-  .build({
-    bundle: true,
-    sourcemap: true,
-    platform: "node",
-    watch: { onRebuild },
-    outfile: outputFilePath,
-    entryPoints: [nodemonOptions.script],
-    external: getDependencies(),
-  })
-  .then(() => {
-    nodemon({
-      verbose: true,
-      signal: "SIGTERM",
-      ...nodemonOptions,
-      script: outputFilePath,
-      watch: outputFilePath,
-      nodeArgs: getNodeArgs(),
+  function removeBuildDir() {
+    const relPath = relative(process.cwd(), buildDir);
+    console.log("[esbuild-nodemon]", "Removing build directory", {
+      path: relPath,
     });
-  })
-  .catch(() => process.exit(1));
+    rmdirSync(buildDir, { recursive: true });
+  }
 
-function onRebuild() {
-  console.log(new Date(), "Rebuild completed.");
+  let shutdown = function (signal) {
+    console.log("[esbuild-nodemon]", "Graceful shutdown", { signal });
+
+    mon.emit("quit", 0);
+    mon.once("exit", () => {
+      removeBuildDir();
+      process.exit();
+    });
+
+    shutdown = () => {
+      removeBuildDir();
+      console.log("[esbuild-nodemon]", "Force shutdown");
+      process.exit();
+    };
+  };
+
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
 }
 
-function getNodeArgs() {
-  const ENABLE_SOURCE_MAPS = "--enable-source-maps";
-  const fromOptions = nodemonOptions.nodeArgs;
-  if (fromOptions == null || fromOptions.length === 0) {
-    return [ENABLE_SOURCE_MAPS];
-  }
-  if (fromOptions.includes(ENABLE_SOURCE_MAPS)) {
-    return fromOptions;
-  }
-  return [ENABLE_SOURCE_MAPS, ...fromOptions];
-}
+run();
 
 function getPathDate() {
   return new Date().toISOString().replace(/\:/g, "-");
-}
-
-function getDependencies() {
-  const { dependencies, devDependencies } = loadPackageJsonSync();
-  const names = [
-    ...Object.keys(dependencies ?? {}),
-    ...Object.keys(devDependencies ?? {}),
-  ];
-  return names;
 }

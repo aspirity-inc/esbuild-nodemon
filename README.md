@@ -1,6 +1,6 @@
 # esbuild-nodemon
 
-1. Bundle you NodeJS app with esbuild
+1. Bundle you NodeJS app with esbuild (without dependencies)
 2. Run output by nodemon
 3. Rebuild and restart on changes
 
