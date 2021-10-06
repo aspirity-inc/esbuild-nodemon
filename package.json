@@ -1,6 +1,6 @@
 {
   "name": "esbuild-nodemon",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "",
   "main": "lib/configs.js",
   "type": "commonjs",
@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/aspirity-ru/esbuild-nodemon#readme",
   "dependencies": {
-    "esbuild": "^0.13.3",
+    "esbuild": "^0.13.4",
     "nodemon": "^2.0.13"
   }
 }
